@@ -11,48 +11,73 @@ init:
     mov ah,0x01
     mov cx,0x2607
     int 0x10
+
+    ;; Screen memory. Set up segments for adressing 
+    mov ax,0xb800
+    mov ds,ax
+
+    mov [editor_pos],0x6
     
 main_loop:
-    ;; TODO: maybe make the input handling here a subroutine? then I avoid the issue with the segments being reset in the middle.
-    mov ah,0x00
-    int 0x16
-    cmp ah,0x48
-    jne main_loop
-    ;; simple drawing to test it out
-    mov ah, 0x2a
-    mov al, 0x05
-    mov bx,0xfe
-    call place_tile
-    
+    call editor_handle_input
+    cmp bx,[editor_pos]
+    je main_loop
+    mov [bx+1],0x20
+    push bx
+    mov bx,[editor_pos]
+    mov [bx+1],0x00
+    pop bx
+    mov [editor_pos],bx
 exit:
-    jmp $
-
+    jmp main_loop
 
     ;;  subroutine to place tiles
     ;;  Input: ah = ascii character
     ;;         al = colors (high + low)
     ;;         bx = position (0-fff)
+    ;; TODO: keep? or delete?
 place_tile:
     push ax
     push ds
-    
-    ;; Screen memory. Set up segments for adressing 
-    push ax
-    mov ax,0xb800
-    mov ds,ax
-    pop ax
-    
+        
     mov [bx],ah
     mov [bx+1],al
     pop ds
     pop ax
     ret
     
-    ;; Board:
-    ;; Can we have a single big board where we use a fancy instruction to shift each entry? each entry having curr+prev bit? or is it easier to have two boards?
-board:   equ 0x8000
-editor_x:   db 40
-editor_y:   db 20
+    ;; Editor subroutine
+    ;; Returns possible new position in bx
+editor_handle_input:
+    mov ah,0x00
+    int 0x16
+
+    mov bx,[editor_pos]
+    cmp ah,0x50
+    je editor_down
+    cmp ah,0x48
+    je editor_up
+    cmp ah,0x4d
+    je editor_right
+    cmp ah,0x4b
+    jne editor_end
+editor_left:
+    sub bx,0x2
+    jmp editor_end
+editor_down:
+    add bx,0xa0
+    jmp editor_end
+editor_up:
+    sub bx,0xa0
+    jmp editor_end
+editor_right:
+    add bx,0x2
+editor_end:
+    ret
+    
+    ;; variables and data storage
+editor_pos:   equ 0x0faa
+editor_old_pos: equ 0x0fab
     ;; TODO: screen position variable for readability. in editor.
     
     ;; Put BIOS signature at end after filling with 0s
