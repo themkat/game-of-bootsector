@@ -18,11 +18,16 @@ init:
 
     mov bx,0x6
 update_editor_pos:
-    push bx 
+    push bx
     mov bx,[editor_pos]
-    mov [bx+1],0x00
+    mov ah,[bx+1]
+    and ah,0x0f
+    mov [bx+1],ah
     pop bx
-    mov [bx+1],0x20 
+    mov ah,[bx+1]
+    and ah,0x0f
+    or ah,0x20
+    mov [bx+1],ah
     mov [editor_pos],bx
 main_loop:
     call editor_handle_input
@@ -31,19 +36,15 @@ main_loop:
 exit:
     jmp main_loop
 
-    ;;  subroutine to place tiles
-    ;;  Input: ah = ascii character
-    ;;         al = colors (high + low)
-    ;;         bx = position (0-fff)
-    ;; TODO: keep? or delete?
+    ;;  subroutine to place game of life tiles
+    ;;  Input: bx = position (0-fff)
 place_tile:
-    push ax
-    push ds
-        
-    mov [bx],ah
-    mov [bx+1],al
-    pop ds
-    pop ax
+    ;; place tile, but preserve editor selection if present
+    mov [bx],0x2a
+    mov ah,[bx+1]
+    and ah,0xf0
+    or ah,0x05
+    mov [bx+1],ah
     ret
     
     ;; Editor subroutine
@@ -53,6 +54,8 @@ editor_handle_input:
     int 0x16
 
     mov bx,[editor_pos]
+    cmp ah,0x39
+    je editor_space
     cmp ah,0x50
     je editor_down
     cmp ah,0x48
@@ -72,12 +75,14 @@ editor_up:
     jmp editor_end
 editor_right:
     add bx,0x2
+    jmp editor_end
+editor_space:
+    call place_tile
 editor_end:
     ret
     
     ;; variables and data storage
 editor_pos:   equ 0x0faa
-    ;; TODO: screen position variable for readability. in editor.
     
     ;; Put BIOS signature at end after filling with 0s
     times 510-($-$$) db 0
