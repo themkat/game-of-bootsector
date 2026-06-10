@@ -77,7 +77,6 @@ editor_end:
     
     ;; variables and data storage
 editor_pos:   equ 0x0faa
-editor_old_pos: equ 0x0fab
     ;; TODO: screen position variable for readability. in editor.
     
     ;; Put BIOS signature at end after filling with 0s
