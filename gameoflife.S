@@ -34,7 +34,7 @@ editor_loop:
     call editor_handle_input
     ;; exit editor condition
     cmp bx,0xbeef
-    jmp main_loop
+    je main_loop
     cmp bx,[editor_pos]
     jne update_editor_pos
     jmp editor_loop
