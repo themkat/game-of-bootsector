@@ -16,18 +16,18 @@ init:
     mov ax,0xb800
     mov ds,ax
 
-    mov [editor_pos],0x6
-    
-main_loop:
-    call editor_handle_input
-    cmp bx,[editor_pos]
-    je main_loop
-    mov [bx+1],0x20
-    push bx
+    mov bx,0x6
+update_editor_pos:
+    push bx 
     mov bx,[editor_pos]
     mov [bx+1],0x00
     pop bx
+    mov [bx+1],0x20 
     mov [editor_pos],bx
+main_loop:
+    call editor_handle_input
+    cmp bx,[editor_pos]
+    jne update_editor_pos
 exit:
     jmp main_loop
 
