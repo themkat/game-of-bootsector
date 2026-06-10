@@ -1,7 +1,6 @@
     ;; Game of Life boot sector edition
     org 0x7c00
     
-    ;; TODO: Basic on screen "editor" to place initial state. Use space or something to place "blocks". To get familiar with graphics and keyboard handling on bare metal 386
 init:
     ;; text 80x25 mode.
     mov ax,0x0002
@@ -16,6 +15,8 @@ init:
     mov ax,0xb800
     mov ds,ax
 
+    ;; The basic on screen editor for creating initial state
+editor:
     mov bx,0x6
 update_editor_pos:
     push bx
@@ -29,15 +30,24 @@ update_editor_pos:
     or ah,0x20
     mov [bx+1],ah
     mov [editor_pos],bx
-main_loop:
+editor_loop:
     call editor_handle_input
+    ;; exit editor condition
+    cmp bx,0xbeef
+    jmp main_loop
     cmp bx,[editor_pos]
     jne update_editor_pos
-exit:
-    jmp main_loop
+    jmp editor_loop
 
+    ;; Main rendering and simulation loop
+main_loop:
+    ;; TODO: count neighbors
+    ;; TODO: update map based upon game of life rules
+    jmp $
+
+    
     ;;  subroutine to place game of life tiles
-    ;;  Input: bx = position (0-fff)
+    ;;  Input: bx = position (0-800)
 place_tile:
     ;; place tile, but preserve editor selection if present
     mov [bx],0x2a
@@ -48,12 +58,15 @@ place_tile:
     ret
     
     ;; Editor subroutine
-    ;; Returns possible new position in bx
+    ;; Returns possible new position in bx.
+    ;; Special return: bx=0xbeef means marked for exit.
 editor_handle_input:
     mov ah,0x00
     int 0x16
 
     mov bx,[editor_pos]
+    cmp ah,0x1
+    je editor_esc
     cmp ah,0x39
     je editor_space
     cmp ah,0x50
@@ -78,11 +91,16 @@ editor_right:
     jmp editor_end
 editor_space:
     call place_tile
+    jmp editor_end
+editor_esc:
+    mov bx,0xbeef
 editor_end:
     ret
     
     ;; variables and data storage
 editor_pos:   equ 0x0faa
+    ;; Neighbors lookup. Outside the graphics segment for simplicity
+neighbors_table: equ 0x8000
     
     ;; Put BIOS signature at end after filling with 0s
     times 510-($-$$) db 0
