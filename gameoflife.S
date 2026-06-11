@@ -55,11 +55,21 @@ main_loop:
 render_loop:
     mov bx,cx
     call count_neighbors
-    shl bx,0x1
 
-    add al,0x61
-    mov [bx],al
-    
+    ;; TODO: can probably rewrite to avoid a few jumps
+    cmp al,0x3
+    je render_alive
+    cmp ah,0x1
+    jne render_dead
+    cmp al, 0x2
+    je render_alive
+    jmp render_dead
+render_dead:
+    call kill_tile
+    jmp render_end
+render_alive:
+    call place_tile
+render_end:
     dec cx
     cmp cx,0x0
     jge render_loop
@@ -71,7 +81,7 @@ frame_sync:
     call wait_for_clock_tick
     loop frame_sync
     
-    jmp frame_sync
+    jmp main_loop
 
     
     ;; Subroutine to wait a tick
@@ -99,7 +109,7 @@ clock_sync:
 
     ;; Subroutine to count neighbors
     ;; Expected state: bx contains coordinate of current cell
-    ;; Output: al contains number of neighbors
+    ;; Output: al contains number of neighbors, ah contains if self is alive
 count_neighbors:
     push ds
     mov ax,prev_board
@@ -113,6 +123,8 @@ count_neighbors:
     add al,[bx+79]
     add al,[bx+80]
     add al,[bx+81]
+
+    mov ah,[bx]
     
     pop ds
     ret
@@ -122,6 +134,14 @@ count_neighbors:
 place_tile:
     ;; place tile, but preserve editor selection if present
     push bx
+
+    ;; Put into internal rep
+    push ds
+    mov ax,current_board
+    mov ds,ax
+    mov [bx],0x01
+    pop ds
+    
     shl bx,0x1
     mov ax,[bx]
     mov [bx],0x2a
@@ -132,6 +152,23 @@ place_tile:
     pop bx
     ret
 
+    ;; Equivalent of the above, but remove a tile.
+    ;; TODO: can we unify the two current_board marking logic pieces?
+kill_tile:  
+    push bx
+
+    ;; Put into internal rep
+    push ds
+    mov ax,current_board
+    mov ds,ax
+    mov [bx],0x0
+    pop ds
+    
+    shl bx,0x1
+    mov word [bx],0x0
+    pop bx
+    ret
+    
     ;; Subroutine for clearing cursor. Either when moving around, or when entering the main loop.
 editor_clear_cursor:
     push bx
@@ -176,11 +213,6 @@ editor_right:
     inc bx
     jmp editor_end
 editor_space:
-    push ds
-    mov ax,current_board
-    mov ds,ax
-    mov [bx],0x01
-    pop ds
     call place_tile
     jmp editor_end
 editor_esc:
