@@ -63,7 +63,6 @@ render_loop:
     jne render_dead
     cmp al, 0x2
     je render_alive
-    jmp render_dead
 render_dead:
     call kill_tile
     jmp render_end
