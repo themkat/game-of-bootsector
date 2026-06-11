@@ -14,7 +14,6 @@ init:
     ;; Screen memory. Set up segments for adressing 
     mov ax,0xb800
     mov ds,ax
-    mov es,ax
 
     ;; The basic on screen editor for creating initial state
 editor:
@@ -38,22 +37,43 @@ editor_loop:
 
 prepare_main:
     call editor_clear_cursor
+    
     ;; Main rendering and simulation loop
 main_loop:
-    ;; TODO: count neighbors
-    ;; TODO: update map based upon game of life rules
-    jmp $
+    ;; Update prev_board
+    push ds
+    mov cx,0x7d0
+    mov ax,current_board
+    mov ds,ax
+    mov ax,prev_board
+    mov es,ax
+    cld
+    rep movsb
+    pop ds
+        
+    mov cx,0x7d0
+render_loop:
+    mov bx,cx
+    call count_neighbors
+    shl bx,0x1
 
+    add al,0x61
+    mov [bx],al
+    
+    dec cx
+    cmp cx,0x0
+    jge render_loop
     
 prepare_next_frame:
     ;; TODO: tune this. Maybe it can be a paramater if I can fit the extra bytes
-    mov cx,0x0002
+    mov cx,0x02
 frame_sync:
     call wait_for_clock_tick
     loop frame_sync
     
-    jmp main_loop
+    jmp frame_sync
 
+    
     ;; Subroutine to wait a tick
     ;; TODO: look into how many registers I actually need to preserve
 wait_for_clock_tick:
@@ -75,6 +95,21 @@ clock_sync:
     pop cx
     pop bx
     pop ax
+    ret
+
+    ;; Subroutine to count neighbors
+    ;; Expected state: bx contains coordinate of current cell
+    ;; Output: al contains number of neighbors
+count_neighbors:
+    push ds
+    mov ax,prev_board
+    mov ds,ax
+    xor al,al
+    add al,[bx-1]
+    add al,[bx+1]
+    ;; TODO: the rest
+    
+    pop ds
     ret
     
     ;;  subroutine to place game of life tiles
@@ -136,6 +171,11 @@ editor_right:
     inc bx
     jmp editor_end
 editor_space:
+    push ds
+    mov ax,current_board
+    mov ds,ax
+    mov [bx],0x01
+    pop ds
     call place_tile
     jmp editor_end
 editor_esc:
@@ -147,9 +187,9 @@ editor_end:
 editor_pos:   equ 0x0faa
     ;; Boards with on/off switches for each cell
     ;; Extremely wasteful memory-wise, but makes for easy short code. That is after all the most important thing here
-    ;; (just a random place in memory)
-current_board:  equ 0x3000
-prev_board:     equ 0x37d1
+    ;; (just a random place in memory. With some space between to avoid adding extra boundary checks)
+current_board:  equ 0x2000
+prev_board:     equ 0x3000
     
     ;; Put BIOS signature at end after filling with 0s
     times 510-($-$$) db 0
