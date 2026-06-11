@@ -46,6 +46,38 @@ main_loop:
     jmp $
 
     
+prepare_next_frame:
+    ;; TODO: tune this. Maybe it can be a paramater if I can fit the extra bytes
+    mov cx,0x0002
+frame_sync:
+    call wait_for_clock_tick
+    loop frame_sync
+    
+    jmp main_loop
+
+    ;; Subroutine to wait a tick
+    ;; TODO: look into how many registers I actually need to preserve
+wait_for_clock_tick:
+    push ax
+    push bx
+    push cx
+    push dx
+    
+    mov ah,0x0
+    int 0x1a
+    mov bx,dx
+clock_sync:
+    mov ah,0x0
+    int 0x1a
+    cmp bx,dx
+    je clock_sync
+
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
+    
     ;;  subroutine to place game of life tiles
     ;;  Input: bx = position (0-800)
 place_tile:
