@@ -88,6 +88,95 @@ place_tile:
     or ah,0x05
     mov [bx+1],ah
     ret
+
+;;     ;; Simple subroutine to populate neighbor_table
+count_neighbors:
+    ;; TODO: optimize. maybe some instructions can save a few bytes?
+    ;;       Probably also better ways of doing the neighbor calculations?
+    mov cx,0x7d0
+neighbor_loop:
+    mov al,0x0
+
+    ;; Transform to screen coordinate space
+    mov bx,cx
+    shl bx,0x1
+    
+    ;; push di
+    ;; mov di,cx
+    ;; mov [neighbors_table],0x0
+    ;; pop di
+    
+    ;; Neighbors
+    ;; TODO: there HAS TO BE A WAY TO DO THIS SHORTER...
+    ;; avoid wraparound left-right
+;;     push ax
+;;     push cx
+;;     mov ax,bx
+;;     mov cx,0x50
+;;     div cx
+;;     cmp dx,0x0
+;;     pop cx
+;;     pop ax
+;;     je neighbors_middle
+;; neighbors_left:
+;;     mov ah,[bx-81]
+;;     sub ah,0x29
+;;     add al,ah
+;;     mov ah,[bx-1]
+;;     sub ah,0x29
+;;     add al,ah
+;;     mov ah,[bx+79]
+;;     sub ah,0x29
+;;     add al,ah
+neighbors_middle:
+    ;; TODO: how to compare without ever going below 0?!
+    mov ah,[bx]
+    cmp ah,0x2a
+    lahf
+    shr ah,0x6
+    and ah,0x1
+    add al,ah
+    ;; mov ah,[bx+0x80]
+    ;; and ah,0x2a
+    ;; sub ah,0x2a
+    ;; add al,ah
+
+ ;;    push ax
+;;     push cx
+;;     mov ax,bx
+;;     mov cx,0x4f
+;;     div cx
+;;     cmp dx,0x0
+;;     pop cx
+;;     pop ax
+;;     jne neighbors_save
+;; neighbors_right:
+;;     mov ah,[bx+79]
+;;     sub ah,0x29
+;;     add al,ah
+;;     mov ah,[bx+1]
+;;     sub ah,0x29
+;;     add al,ah
+;;     mov ah,[bx+81]
+;;     sub ah,0x29
+;;     add al,ah
+;; neighbors_save:
+;;     ;; check self (alive/dead status)
+;;     mov ah,[bx]
+;;     sub ah,0x29
+;;     shl ah,0x7
+;;     or al,ah
+
+    push di
+    mov di,neighbors_table
+    mov bx,cx
+    mov [bx],al
+    pop di
+    
+    dec cx
+    cmp cx,0x0
+    jge neighbor_loop
+    ret
     
     ;; Editor subroutine
     ;; Returns possible new position in bx.
@@ -132,7 +221,12 @@ editor_end:
     ;; variables and data storage
 editor_pos:   equ 0x0faa
     ;; Neighbors lookup. Outside the graphics segment for simplicity
-neighbors_table: equ 0x8000
+    ;; 7 bits count with upper bit alive/dead.
+    ;; Probably a bit wasteful, but less code to handle.
+neighbors_table: equ 0x7e00
+    ;; TODO: is this too finicky?
+    ;;       it quickly takes a lot of error prone instructions...
+    ;;     any way we can count all neighbors in an easy way? without wraparound? or should we just allow wraparound?
     
     ;; Put BIOS signature at end after filling with 0s
     times 510-($-$$) db 0
