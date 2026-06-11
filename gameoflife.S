@@ -105,9 +105,14 @@ count_neighbors:
     mov ax,prev_board
     mov ds,ax
     xor al,al
+    add al,[bx-81]
+    add al,[bx-80]
+    add al,[bx-79]
     add al,[bx-1]
     add al,[bx+1]
-    ;; TODO: the rest
+    add al,[bx+79]
+    add al,[bx+80]
+    add al,[bx+81]
     
     pop ds
     ret
