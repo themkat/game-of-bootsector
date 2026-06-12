@@ -117,7 +117,7 @@ wait_for_clock_tick:
     push cx
     push dx
     
-    mov ah,0x0
+    xor ah,ah
     int 0x1a
     mov bx,dx
 clock_sync:
@@ -169,10 +169,10 @@ place_tile:
     
     shl bx,0x1
     mov [bx],0x2a
-    mov ah,[bx+1]
-    and ah,0xf0
-    or ah,0x05
-    mov [bx+1],ah
+    mov al,[bx+1]
+    and al,0xf0
+    or al,0x05
+    mov [bx+1],al
     pop bx
     ret
 
