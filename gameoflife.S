@@ -15,6 +15,9 @@ init:
     mov ax,0xb800
     mov ds,ax
 
+    ;; Default render speed
+    mov word [render_speed], 0x000f
+
     ;; The basic on screen editor for creating initial state
 editor:
     mov bx,0x3
@@ -52,7 +55,29 @@ main_loop:
     cld
     rep movsb
     pop ds
-        
+
+    ;; Check for keyboard inputs
+    ;; (render speed control, but may be more in the future...?)
+    ;; TODO: if it gets bigger, maybe it should be a subroutine?
+    mov ah,0x01
+    int 0x16
+    je main_after_keys_check
+    cmp ah,0x3b
+    jne main_check_speed_increase
+    mov al, [render_speed]
+    inc al
+    mov [render_speed],al
+    jmp main_after_keys_check
+main_check_speed_increase:
+    cmp ah,0x3c
+    jne main_after_keys_check
+    mov al, [render_speed]
+    cmp al,0x1
+    je main_after_keys_check
+    dec al
+    mov [render_speed],al
+    
+main_after_keys_check:
     mov cx,0x7d0
 render_loop:
     mov bx,cx
@@ -77,7 +102,7 @@ render_end:
     
 prepare_next_frame:
     ;; TODO: tune this. Maybe it can be a paramater if I can fit the extra bytes
-    mov cx,0x02
+    mov cx,[render_speed]
 frame_sync:
     call wait_for_clock_tick
     loop frame_sync
@@ -223,8 +248,9 @@ editor_end:
     
     ;; variables and data storage
 editor_pos:   equ 0x0faa
-    ;; Boards with on/off switches for each cell
-    ;; Extremely wasteful memory-wise, but makes for easy short code. That is after all the most important thing here
+render_speed: equ 0x0fba
+    ;; Boards with on/off switches for each cell. With one line padding above and below for 0 values to avoid propogation of random values outside the range.
+    ;; Extremely wasteful memory-wise, but makes for easy short code. That is after all the most important thing here.
     ;; (just a random place in memory. With some space between to avoid adding extra boundary checks)
 current_board:  equ 0x2000
 prev_board:     equ 0x3000
