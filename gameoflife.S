@@ -168,7 +168,6 @@ place_tile:
     pop ds
     
     shl bx,0x1
-    mov ax,[bx]
     mov [bx],0x2a
     mov ah,[bx+1]
     and ah,0xf0
