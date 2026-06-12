@@ -101,7 +101,6 @@ render_end:
     jge render_loop
     
 prepare_next_frame:
-    ;; TODO: tune this. Maybe it can be a paramater if I can fit the extra bytes
     mov cx,[render_speed]
 frame_sync:
     call wait_for_clock_tick
