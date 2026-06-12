@@ -1,4 +1,4 @@
-* Game of ~Life~ Bootsector
+* Game of +Life+ Bootsector
 Simple game of life implementation that runs as a boot sector program on 8086 "IBM PC" systems. Just a fun little first try at x86 sizecoding, as I have limited experience with x86 assembly. (my previous experience was user-space Linux programs only, so they had no BIOS calls or messing with segmenting registers). Usually not a program I would bother sharing, but I got quite pleased with it. Also, to show some love for Game of Life <3 (read the Recursive Universe by William Poundstone if you don't yet love Conway's Game of Life)
 
 
