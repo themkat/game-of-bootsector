@@ -43,6 +43,8 @@ main_loop:
     ;; Update prev_board
     push ds
     mov cx,0x7d0
+    xor di,di
+    xor si,si
     mov ax,current_board
     mov ds,ax
     mov ax,prev_board
