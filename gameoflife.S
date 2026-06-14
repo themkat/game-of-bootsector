@@ -62,6 +62,8 @@ main_loop:
     mov ah,0x01
     int 0x16
     je main_after_keys_check
+    xor ah,ah
+    int 0x16
     cmp ah,0x3b
     jne main_check_speed_increase
     mov al, [render_speed]
