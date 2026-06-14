@@ -3,4 +3,4 @@ Simple game of life implementation that runs as a boot sector program on 8086 "I
 
 
 ** Usage
-Compile with =make=, then burn the image to a suitable format. Boot like any other boot disk. You start out with an editor where you can move around with the arrow keys and place tiles with space. When you want to start the simulation, you press ESC. Now the simulation starts. You can tune the speed with F1 and F2.
+Compile with =make=, then burn the image to a suitable format. (or use =make run= if you have qemu-system-i386 installed to run in an emulator). Boot like any other boot disk. You start out with an editor where you can move around with the arrow keys and place tiles with space. When you want to start the simulation, you press ESC. Now the simulation starts. You can tune the speed with F1 and F2.
